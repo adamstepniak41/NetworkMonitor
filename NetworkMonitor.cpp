@@ -7,6 +7,8 @@
 #include <PcapLiveDeviceList.h>
 #include <EthLayer.h>
 #include <Packet.h>
+#include <queue>
+#include "PacketQueue.h"
 
 
 void DumpBuffer(const uint8_t* buffPtr, size_t length){
@@ -17,10 +19,18 @@ void DumpBuffer(const uint8_t* buffPtr, size_t length){
     std::cout << "BUFFER_END" << std::endl;
 }
 
-static void OnPacketArrived(pcpp::RawPacket* pPacket, pcpp::PcapLiveDevice* pDevice, void* userCookie){
-    pcpp::Packet packet(pPacket);
-    if(packet.isPacketOfType(pcpp::ARP)){
+PacketQueue packetQueue;
 
+bool PacketTypeSupported(const pcpp::Packet& packet){
+    //#TODO: To Implement
+    return true;
+}
+
+void OnPacketArrived(pcpp::RawPacket* pPacket, pcpp::PcapLiveDevice* pDevice, void* userCookie){
+    auto packet = std::make_unique<pcpp::Packet>(pPacket);
+
+    if(PacketTypeSupported(*packet)){
+        packetQueue.Enqueue(std::move(packet));
     }
 }
 
