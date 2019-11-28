@@ -1,3 +1,10 @@
+How to build?
+
+    conan install . -s build_type=release --install-folder=cmake-build-release
+    cd cmake-build-release
+    cmake -DCMAKE_BUILD_TYPE=release -G "Unix Makefiles" ..
+    make
+    
 1. Measuring round-trip using TCP SYNC
 
 The most common way to measure round trip using Internet Control Message Protocol (used by ping) is prone to inaccuracy due to:
