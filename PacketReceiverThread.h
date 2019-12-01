@@ -9,23 +9,20 @@
 #include <atomic>
 #include <thread>
 #include "PacketQueue.h"
+#include "Thread.h"
 
-class PacketReceiverThread {
+class PacketReceiverThread : public Thread {
 public:
     PacketReceiverThread(PacketQueue& packetQueue);
-    void Start();
-    void Stop();
 private:
-    void MainLoop();
+    void MainLoop() override;
 
     bool PacketTypeSupported(pcpp::Packet& packet);
     static void OnPacketArrived(pcpp::RawPacket* pPacket, pcpp::PcapLiveDevice* pDevice, void* userCookie);
     bool StartCapturing();
 
-    std::atomic<bool> m_runThread;
     bool m_captureStarted;
     PacketQueue& m_packetQueue;
-    std::unique_ptr<std::thread> m_mainThread;
 };
 
 #endif //NETWORKMONITOR_PACKETRECEIVERTHREAD_H

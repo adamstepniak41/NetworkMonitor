@@ -9,7 +9,7 @@
 #include "TcpLayer.h"
 
 PacketReceiverThread::PacketReceiverThread(PacketQueue& packetQueue)
-: m_packetQueue(packetQueue), m_runThread(false), m_captureStarted(false) {
+: m_packetQueue(packetQueue) {
 }
 
 void PacketReceiverThread::OnPacketArrived(pcpp::RawPacket* pPacket, pcpp::PcapLiveDevice* pDevice, void* userCookie){
@@ -28,16 +28,6 @@ bool PacketReceiverThread::PacketTypeSupported(pcpp::Packet &packet) {
     }
 
     return false;
-}
-
-void PacketReceiverThread::Start() {
-    m_mainThread.reset(new std::thread(std::bind(&PacketReceiverThread::MainLoop, this)));
-    m_runThread = true;
-}
-
-void PacketReceiverThread::Stop() {
-    m_runThread = false;
-    m_mainThread->join();
 }
 
 void PacketReceiverThread::MainLoop() {
