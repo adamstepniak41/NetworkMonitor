@@ -1,7 +1,7 @@
 #include <iostream>
 #include "PacketQueue.h"
-#include "PacketReceiverThread.h"
-#include "PacketProcessorThread.h"
+#include "PacketReceiver.h"
+#include "PacketProcessor.h"
 
 void DumpBuffer(const uint8_t* buffPtr, size_t length){
     std::cout << "BUFFER_BEGIN" << std::endl;
@@ -14,8 +14,8 @@ void DumpBuffer(const uint8_t* buffPtr, size_t length){
 int main(int argc, char **argv)
 {
     PacketQueue packetQueue;
-    PacketReceiverThread packetReceiver(packetQueue);
-    PacketProcessorThread packetProcessor(packetQueue);
+    PacketReceiver packetReceiver(packetQueue);
+    PacketProcessor packetProcessor(packetQueue);
 
     packetReceiver.Start();
     packetProcessor.Start();

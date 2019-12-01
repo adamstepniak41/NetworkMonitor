@@ -5,9 +5,9 @@
 #include "Thread.h"
 #include <thread>
 
-class PacketProcessorThread : public Thread {
+class PacketProcessor : public Thread {
 public:
-    PacketProcessorThread(PacketQueue& packetQueue);
+    PacketProcessor(PacketQueue& packetQueue);
 protected:
     void MainLoop() override;
 

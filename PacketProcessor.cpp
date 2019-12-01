@@ -3,14 +3,14 @@
 //
 
 #include <functional>
-#include "PacketProcessorThread.h"
+#include "PacketProcessor.h"
 #include <iostream>
 
-PacketProcessorThread::PacketProcessorThread(PacketQueue &packetQueue)
+PacketProcessor::PacketProcessor(PacketQueue &packetQueue)
 : m_packetQueue(packetQueue)
 {}
 
-void PacketProcessorThread::MainLoop() {
+void PacketProcessor::MainLoop() {
     while(m_runThread){
         auto packet = m_packetQueue.Dequeue();
         std::cout << packet->toString() << std::endl;

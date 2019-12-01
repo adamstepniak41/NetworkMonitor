@@ -12,7 +12,7 @@ endif()
 
 conan_basic_setup(NetworkMonitor)
 
-add_executable(NetworkMonitor NetworkMonitor.cpp PacketQueue.cpp PacketQueue.h PacketReceiverThread.cpp PacketReceiverThread.h PacketProcessorThread.cpp PacketProcessorThread.h DataPlaneThread.cpp DataPlaneThread.h Thread.cpp Thread.h)
+add_executable(NetworkMonitor NetworkMonitor.cpp PacketQueue.cpp PacketQueue.h PacketReceiver.cpp PacketReceiver.h PacketProcessor.cpp PacketProcessor.h ControlPlane.cpp ControlPlane.h Thread.cpp Thread.h)
 
 include_directories(SYSTEM include)
 target_link_libraries(NetworkMonitor ${CONAN_PKG_LIBS_PCAPPLUSPLUS} ${CONAN_PKG_LIBS_LIBPCAP})

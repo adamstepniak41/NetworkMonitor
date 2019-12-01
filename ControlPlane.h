@@ -1,6 +1,6 @@
 #pragma once
 
-class DataPlaneThread {
+class DataPlane {
 public:
 
 };

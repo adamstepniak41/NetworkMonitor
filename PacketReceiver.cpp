@@ -5,16 +5,16 @@
 #include <PcapLiveDevice.h>
 #include <iostream>
 #include <functional>
-#include "PacketReceiverThread.h"
+#include "PacketReceiver.h"
 #include "TcpLayer.h"
 
-PacketReceiverThread::PacketReceiverThread(PacketQueue& packetQueue)
+PacketReceiver::PacketReceiver(PacketQueue& packetQueue)
 : m_packetQueue(packetQueue) {
 }
 
-void PacketReceiverThread::OnPacketArrived(pcpp::RawPacket* pPacket, pcpp::PcapLiveDevice* pDevice, void* userCookie){
+void PacketReceiver::OnPacketArrived(pcpp::RawPacket* pPacket, pcpp::PcapLiveDevice* pDevice, void* userCookie){
     auto packet = std::make_unique<pcpp::Packet>(pPacket);
-    auto packetReceiver = static_cast<PacketReceiverThread*>(userCookie);
+    auto packetReceiver = static_cast<PacketReceiver*>(userCookie);
 
     if(packetReceiver->PacketTypeSupported(*packet)){
         std::cout << "Packet inserted to the queue" << std::endl;
@@ -22,7 +22,7 @@ void PacketReceiverThread::OnPacketArrived(pcpp::RawPacket* pPacket, pcpp::PcapL
     }
 }
 
-bool PacketReceiverThread::PacketTypeSupported(pcpp::Packet &packet) {
+bool PacketReceiver::PacketTypeSupported(pcpp::Packet &packet) {
     if(packet.isPacketOfType(pcpp::TCP)){
         return true;
     }
@@ -30,7 +30,7 @@ bool PacketReceiverThread::PacketTypeSupported(pcpp::Packet &packet) {
     return false;
 }
 
-void PacketReceiverThread::MainLoop() {
+void PacketReceiver::MainLoop() {
     while(m_runThread){
         if(!m_captureStarted){
             m_captureStarted = StartCapturing();
@@ -42,7 +42,7 @@ void PacketReceiverThread::MainLoop() {
     }
 }
 
-bool PacketReceiverThread::StartCapturing() {
+bool PacketReceiver::StartCapturing() {
     auto& devices = pcpp::PcapLiveDeviceList::getInstance();
     auto deviceList = devices.getPcapLiveDevicesList();
     auto initialized = true;

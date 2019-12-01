@@ -2,8 +2,8 @@
 // Created by adam on 30/11/2019.
 //
 
-#ifndef NETWORKMONITOR_PACKETRECEIVERTHREAD_H
-#define NETWORKMONITOR_PACKETRECEIVERTHREAD_H
+#ifndef NETWORKMONITOR_PACKETRECEIVER_H
+#define NETWORKMONITOR_PACKETRECEIVER_H
 
 #include <PcapLiveDeviceList.h>
 #include <atomic>
@@ -11,9 +11,9 @@
 #include "PacketQueue.h"
 #include "Thread.h"
 
-class PacketReceiverThread : public Thread {
+class PacketReceiver : public Thread {
 public:
-    PacketReceiverThread(PacketQueue& packetQueue);
+    PacketReceiver(PacketQueue& packetQueue);
 private:
     void MainLoop() override;
 
@@ -25,4 +25,4 @@ private:
     PacketQueue& m_packetQueue;
 };
 
-#endif //NETWORKMONITOR_PACKETRECEIVERTHREAD_H
+#endif //NETWORKMONITOR_PACKETRECEIVER_H
