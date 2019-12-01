@@ -14,16 +14,12 @@
 //Thread safe packet queue
 class PacketQueue {
 public:
-    PacketQueue();
-
     void Enqueue(std::unique_ptr<pcpp::Packet> packet);
-    std::unique_ptr<pcpp::Packet> Dequeue(std::unique_ptr<pcpp::Packet> packet);
+    std::unique_ptr<pcpp::Packet> Dequeue();
 private:
     std::mutex m_mutex;
     std::condition_variable m_cv;
-    bool m_notEmpty;
     std::queue<std::unique_ptr<pcpp::Packet> > m_packets;
 };
-
 
 #endif //NETWORKMONITOR_PACKETQUEUE_H
