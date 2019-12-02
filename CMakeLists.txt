@@ -10,5 +10,5 @@ else()
     message(WARNING "The file conanbuildinfo.cmake doesn't exist, you have to run conan install first")
 endif()
 
-add_executable(NetworkMonitor NetworkMonitor.cpp PacketQueue.cpp PacketQueue.h PacketReceiver.cpp PacketReceiver.h PacketProcessor.cpp PacketProcessor.h ControlPlane.cpp ControlPlane.h Thread.cpp Thread.h)
+add_executable(NetworkMonitor NetworkMonitor.cpp PacketQueue.cpp PacketReceiver.cpp PacketProcessor.cpp Thread.cpp)
 target_link_libraries(NetworkMonitor ${CONAN_LIBS})
