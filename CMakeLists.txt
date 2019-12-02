@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 3.1)
 project (NetworkMonitor)
 
 add_definitions("-std=c++14")
@@ -10,9 +10,5 @@ else()
     message(WARNING "The file conanbuildinfo.cmake doesn't exist, you have to run conan install first")
 endif()
 
-conan_basic_setup(NetworkMonitor)
-
 add_executable(NetworkMonitor NetworkMonitor.cpp PacketQueue.cpp PacketQueue.h PacketReceiver.cpp PacketReceiver.h PacketProcessor.cpp PacketProcessor.h ControlPlane.cpp ControlPlane.h Thread.cpp Thread.h)
-
-include_directories(SYSTEM include)
-target_link_libraries(NetworkMonitor ${CONAN_PKG_LIBS_PCAPPLUSPLUS} ${CONAN_PKG_LIBS_LIBPCAP})
+target_link_libraries(NetworkMonitor ${CONAN_LIBS})

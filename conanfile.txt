@@ -1,5 +1,7 @@
- [requires]
- pcapplusplus/19.04@bincrafters/stable
+[requires]
+pcapplusplus/19.04@bincrafters/stable
+zmq/4.2.2@bincrafters/stable
+cppzmq/4.2.2@bincrafters/stable
 
- [generators]
- cmake
+[generators]
+cmake
