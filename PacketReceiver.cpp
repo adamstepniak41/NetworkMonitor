@@ -8,8 +8,8 @@
 #include "PacketReceiver.h"
 #include "TcpLayer.h"
 
-PacketReceiver::PacketReceiver(PacketQueue& packetQueue)
-: m_packetQueue(packetQueue) {
+PacketReceiver::PacketReceiver(PacketQueue& packetQueue, zmq::context_t& context)
+:  m_packetQueue(packetQueue), m_context(context), m_socket(m_context, ZMQ_REQ) {
 }
 
 void PacketReceiver::OnPacketArrived(pcpp::RawPacket* pPacket, pcpp::PcapLiveDevice* pDevice, void* userCookie){
@@ -32,37 +32,39 @@ bool PacketReceiver::PacketTypeSupported(pcpp::Packet &packet) {
 
 void PacketReceiver::MainLoop() {
     while(m_runThread){
-        if(!m_captureStarted){
-            m_captureStarted = StartCapturing();
-            continue;
-        }
-
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        // Do the this thread work
+
+        //Send a request to packet receiver
+        std::string message = "Give me configuration!";
+        zmq::message_t request(message.size());
+        memcpy(request.data(), message.data(), message.size());
+        m_socket.send(request);
+
+        zmq::message_t reply;
+        m_socket.recv(&reply);
+        std::cout << "Received replay: " << static_cast<const char*>(reply.data()) << std::endl;
     }
 }
 
-bool PacketReceiver::StartCapturing() {
+void PacketReceiver::StartCapturing() {
     auto& devices = pcpp::PcapLiveDeviceList::getInstance();
     auto deviceList = devices.getPcapLiveDevicesList();
-    auto initialized = true;
 
     pcpp::PcapLiveDevice* wlp7s0 = devices.getPcapLiveDeviceByName("wlp7s0");
-    if(!wlp7s0){
-        std::cout << "Device: wlp7s0 was not found." << std::endl;
-        initialized = false;
-    }
+    if(!wlp7s0)
+        std::runtime_error("Device: wlp7s0 was not found.");
 
-    if(!wlp7s0->open()){
-        std::cout << "Device wlp7s0 could not be opened." << std::endl;
-        initialized = false;
-    }
+    if(!wlp7s0->open())
+        std::runtime_error("Device wlp7s0 could not be opened.");
 
-    if(!wlp7s0->startCapture(OnPacketArrived, this)){
-        std::cout << "Unable to start capturing." << std::endl;
-        initialized = false;
-    }
+    if(!wlp7s0->startCapture(OnPacketArrived, this))
+        std::runtime_error("Unable to start capturing.");
+}
 
-    return initialized;
+void PacketReceiver::OnThreadStarting() {
+    std::cout << "Connecting inproc://my_publisher" << std::endl;
+    m_socket.connect("inproc://my_publisher");
+
+    StartCapturing();
 }
 

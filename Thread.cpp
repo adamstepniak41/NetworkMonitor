@@ -6,6 +6,7 @@
 #include "Thread.h"
 
 void Thread::Start() {
+    OnThreadStarting();
     m_runThread = true;
     m_mainThread.reset(new std::thread(std::bind(&Thread::MainLoop, this)));
 }

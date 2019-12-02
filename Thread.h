@@ -10,6 +10,7 @@ public:
     void Stop();
 protected:
     virtual void MainLoop() = 0;
+    virtual void OnThreadStarting(){}
 
     std::atomic<bool> m_runThread;
     std::unique_ptr<std::thread> m_mainThread;

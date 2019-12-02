@@ -8,21 +8,24 @@
 #include <PcapLiveDeviceList.h>
 #include <atomic>
 #include <thread>
+#include <zmq.hpp>
 #include "PacketQueue.h"
 #include "Thread.h"
 
 class PacketReceiver : public Thread {
 public:
-    PacketReceiver(PacketQueue& packetQueue);
+    PacketReceiver(PacketQueue& packetQueue, zmq::context_t& context);
 private:
     void MainLoop() override;
+    void OnThreadStarting() override;
 
     bool PacketTypeSupported(pcpp::Packet& packet);
     static void OnPacketArrived(pcpp::RawPacket* pPacket, pcpp::PcapLiveDevice* pDevice, void* userCookie);
-    bool StartCapturing();
+    void StartCapturing();
 
-    bool m_captureStarted;
     PacketQueue& m_packetQueue;
+    zmq::context_t& m_context;
+    zmq::socket_t m_socket;
 };
 
 #endif //NETWORKMONITOR_PACKETRECEIVER_H
