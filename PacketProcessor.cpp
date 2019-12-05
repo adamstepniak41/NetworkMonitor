@@ -5,10 +5,12 @@
 #include <functional>
 #include "PacketProcessor.h"
 #include <iostream>
+#include "Messages.h"
 
 PacketProcessor::PacketProcessor(PacketQueue &packetQueue, zmq::context_t& context)
-: m_packetQueue(packetQueue), m_context(context), m_socket(m_context, ZMQ_REP)
+: m_packetQueue(packetQueue), m_context(context), m_socket(m_context, ZMQ_SUB)
 {}
+
 
 void PacketProcessor::MainLoop() {
     while(m_runThread){
@@ -18,18 +20,15 @@ void PacketProcessor::MainLoop() {
         //Wait for next request from client
         zmq::message_t request;
         m_socket.recv(&request);
-        std::cout << "PacketProcessor: Received request: " << static_cast<const char*>(request.data()) << std::endl;
 
-        //Processing request
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        zmq::message_t reply;
-        std::string message = "Response with configuration";
-        memcpy(reply.data(), message.data(), message.size());
-        m_socket.send(reply);
+        PacketMetadata* metadata = static_cast<PacketMetadata*>(request.data());
+        std::cout << "Received metadata object with type: " << +metadata->m_type << " and size: " << metadata->m_size << std::endl;
     }
 }
 
 void PacketProcessor::OnThreadStarting() {
     std::cout << "Binding inproc://my_publisher" << std::endl;
+    uint8_t subscription = 1;
+    m_socket.setsockopt(ZMQ_SUBSCRIBE, &subscription, sizeof(subscription));
     m_socket.bind("inproc://my_publisher");
 }

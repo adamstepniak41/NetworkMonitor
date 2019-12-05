@@ -7,9 +7,10 @@
 #include <functional>
 #include "PacketReceiver.h"
 #include "TcpLayer.h"
+#include "Messages.h"
 
 PacketReceiver::PacketReceiver(PacketQueue& packetQueue, zmq::context_t& context)
-:  m_packetQueue(packetQueue), m_context(context), m_socket(m_context, ZMQ_REQ) {
+:  m_packetQueue(packetQueue), m_context(context), m_socket(m_context, ZMQ_PUB) {
 }
 
 void PacketReceiver::OnPacketArrived(pcpp::RawPacket* pPacket, pcpp::PcapLiveDevice* pDevice, void* userCookie){
@@ -35,14 +36,18 @@ void PacketReceiver::MainLoop() {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
         //Send a request to packet receiver
-        std::string message = "Give me configuration!";
-        zmq::message_t request(message.size());
-        memcpy(request.data(), message.data(), message.size());
+        PacketMetadata metadata;
+        zmq::message_t request(sizeof(PacketMetadata));
+        memcpy(request.data(), &metadata, sizeof(PacketMetadata));
         m_socket.send(request);
 
-        zmq::message_t reply;
-        m_socket.recv(&reply);
-        std::cout << "Received replay: " << static_cast<const char*>(reply.data()) << std::endl;
+        //Send a request with another parameters
+        PacketMetadata metadata2;
+        metadata2.m_size = 30;
+        metadata2.m_type = 40;
+        zmq::message_t request2(sizeof(PacketMetadata));
+        memcpy(request2.data(), &metadata2, sizeof(PacketMetadata));
+        m_socket.send(request2);
     }
 }
 
