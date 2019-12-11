@@ -9,23 +9,22 @@
 #include "TcpLayer.h"
 
 bool PacketReceiver::AddFilter(PacketObserverShPtr observer, const pcpp::ProtocolType protocol) noexcept{
+    std::unique_lock<std::mutex> lock(m_mutex);
 
     auto attachedObserver = m_packetObservers.find(observer);
     if(attachedObserver==m_packetObservers.end()) {
         return false;
     }
 
-    {
-        std::unique_lock<std::mutex> lock(m_mutex);
-
-        auto& subscribedObservers = m_protocolToObserver[protocol];
-        subscribedObservers.insert(observer);
-    }
+    auto& subscribedObservers = m_protocolToObserver[protocol];
+    subscribedObservers.insert(observer);
 
     return true;
 }
 
 bool PacketReceiver::RemoveFilter(PacketObserverShPtr observer, const pcpp::ProtocolType protocol)  noexcept{
+    std::unique_lock<std::mutex> lock(m_mutex);
+
     auto attachedObserver = m_packetObservers.find(observer);
     if(attachedObserver==m_packetObservers.end()) {
         return false;
@@ -38,7 +37,6 @@ bool PacketReceiver::RemoveFilter(PacketObserverShPtr observer, const pcpp::Prot
 
     auto protocolObserver = subscribedObservers->second.find(observer);
     if(protocolObserver!=subscribedObservers->second.end()){
-        std::unique_lock<std::mutex> lock(m_mutex);
         subscribedObservers->second.erase(protocolObserver);
     }
 
@@ -56,18 +54,16 @@ bool PacketReceiver::Attach(PacketObserverShPtr observer) noexcept{
 }
 
 bool PacketReceiver::Detach(PacketObserverShPtr observer) noexcept{
+    std::unique_lock<std::mutex> lock(m_mutex);
+
     auto searchResult = m_packetObservers.find(observer);
     if(searchResult==m_packetObservers.end()) {
         return  false;
     }
 
-    {
-        std::unique_lock<std::mutex> lock(m_mutex);
-
-        m_packetObservers.erase(searchResult);
-        for(auto& protocol: m_protocolToObserver){
-            protocol.second.erase(observer);
-        }
+    m_packetObservers.erase(searchResult);
+    for(auto& protocol: m_protocolToObserver){
+        protocol.second.erase(observer);
     }
 
     return true;
