@@ -1,6 +1,6 @@
 How to build?
 
-    conan install . -s build_type=Release --install-folder=cmake-build-release
+    conan install . -s build_type=Release --install-folder=cmake-build-release --profile=gcc_x86_64
     cd cmake-build-release
     cmake -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" ..
     make

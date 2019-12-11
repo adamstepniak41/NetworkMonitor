@@ -10,5 +10,31 @@ else()
     message(WARNING "The file conanbuildinfo.cmake doesn't exist, you have to run conan install first")
 endif()
 
-add_executable(NetworkMonitor NetworkMonitor.cpp PacketQueue.cpp PacketReceiver.cpp PacketProcessor.cpp Thread.cpp)
-target_link_libraries(NetworkMonitor ${CONAN_LIBS})
+# Will be used later on when project grows and will send data to a server
+#include(${CONAN_LIB_DIRS_PROTOC_INSTALLER}/cmake/protoc/protoc-config.cmake)
+#protobuf_generate(TARGET NetworkMonitor)
+
+set(SOURCES PacketQueue.cpp PacketReceiver.cpp Thread.cpp CaptureReceiver.cpp CaptureReceiver.h PcapReceiver.cpp PcapReceiver.h)
+add_executable(NetworkMonitor NetworkMonitor.cpp ${SOURCES})
+
+target_link_libraries(NetworkMonitor PUBLIC
+        ${CONAN_LIBS}
+        )
+
+# Make sure that generated headers can be found
+target_include_directories(NetworkMonitor
+        PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
+        )
+
+# UNIT TESTS
+target_include_directories(NetworkMonitor
+        PUBLIC ${CONAN_INCLUDE_DIRS_GTEST})
+
+add_executable(UnitTests
+        PacketReceiverUnitTest.cpp ${SOURCES} )
+
+add_test(Name UnitTests
+        COMMAND UnitTests)
+
+target_link_libraries(UnitTests
+        PUBLIC ${CONAN_LIBS} )

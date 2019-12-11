@@ -1,31 +1,31 @@
-//
-// Created by adam on 30/11/2019.
-//
-
-#ifndef NETWORKMONITOR_PACKETRECEIVER_H
-#define NETWORKMONITOR_PACKETRECEIVER_H
+#pragma  once
 
 #include <PcapLiveDeviceList.h>
-#include <atomic>
-#include <thread>
-#include <zmq.hpp>
+#include <set>
+#include <map>
 #include "PacketQueue.h"
 #include "Thread.h"
+#include "Interfaces.h"
 
-class PacketReceiver : public Thread {
+using PacketObserverShPtr = std::shared_ptr<IObserver<std::shared_ptr<pcpp::Packet> > >;
+
+class PacketReceiver :
+        public Thread,
+        public IObservedSubject<PacketObserverShPtr>,
+        public IPacketFilter<PacketObserverShPtr>{
 public:
-    PacketReceiver(PacketQueue& packetQueue, zmq::context_t& context);
+    bool Attach(PacketObserverShPtr observer) noexcept;
+    bool Detach(PacketObserverShPtr observer) noexcept;
+
+    bool AddFilter(PacketObserverShPtr observer, const pcpp::ProtocolType protocol) noexcept;
+    bool RemoveFilter(PacketObserverShPtr observer, const pcpp::ProtocolType protocol) noexcept;
+protected:
+    virtual void OnPacketDistributing(pcpp::Packet& packet){};
+    PacketQueue m_packetQueue;
 private:
     void MainLoop() override;
-    void OnThreadStarting() override;
-
-    bool PacketTypeSupported(pcpp::Packet& packet);
-    static void OnPacketArrived(pcpp::RawPacket* pPacket, pcpp::PcapLiveDevice* pDevice, void* userCookie);
-    void StartCapturing();
-
-    PacketQueue& m_packetQueue;
-    zmq::context_t& m_context;
-    zmq::socket_t m_socket;
+    void DistributePacket(std::shared_ptr<pcpp::Packet> packet);
+    std::set<PacketObserverShPtr > m_packetObservers;
+    std::map<pcpp::ProtocolType, std::set<PacketObserverShPtr> > m_protocolToObserver;
+    std::mutex m_mutex;
 };
-
-#endif //NETWORKMONITOR_PACKETRECEIVER_H

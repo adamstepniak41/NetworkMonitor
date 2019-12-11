@@ -2,6 +2,9 @@
 pcapplusplus/19.04@bincrafters/stable
 zmq/4.2.2@bincrafters/stable
 cppzmq/4.2.2@bincrafters/stable
+protobuf/3.9.1@bincrafters/stable
+protoc_installer/3.9.1@bincrafters/stable
+gtest/1.8.0@bincrafters/stable
 
 [generators]
 cmake

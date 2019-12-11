@@ -7,69 +7,96 @@
 #include <functional>
 #include "PacketReceiver.h"
 #include "TcpLayer.h"
-#include "Messages.h"
 
-PacketReceiver::PacketReceiver(PacketQueue& packetQueue, zmq::context_t& context)
-:  m_packetQueue(packetQueue), m_context(context), m_socket(m_context, ZMQ_PUB) {
-}
+bool PacketReceiver::AddFilter(PacketObserverShPtr observer, const pcpp::ProtocolType protocol) noexcept{
 
-void PacketReceiver::OnPacketArrived(pcpp::RawPacket* pPacket, pcpp::PcapLiveDevice* pDevice, void* userCookie){
-    auto packet = std::make_unique<pcpp::Packet>(pPacket);
-    auto packetReceiver = static_cast<PacketReceiver*>(userCookie);
-
-    if(packetReceiver->PacketTypeSupported(*packet)){
-        std::cout << "Packet inserted to the queue" << std::endl;
-        packetReceiver->m_packetQueue.Enqueue(std::move(packet));
-    }
-}
-
-bool PacketReceiver::PacketTypeSupported(pcpp::Packet &packet) {
-    if(packet.isPacketOfType(pcpp::TCP)){
-        return true;
+    auto attachedObserver = m_packetObservers.find(observer);
+    if(attachedObserver==m_packetObservers.end()) {
+        return false;
     }
 
-    return false;
+    {
+        std::unique_lock<std::mutex> lock(m_mutex);
+
+        auto& subscribedObservers = m_protocolToObserver[protocol];
+        subscribedObservers.insert(observer);
+    }
+
+    return true;
+}
+
+bool PacketReceiver::RemoveFilter(PacketObserverShPtr observer, const pcpp::ProtocolType protocol)  noexcept{
+    auto attachedObserver = m_packetObservers.find(observer);
+    if(attachedObserver==m_packetObservers.end()) {
+        return false;
+    }
+
+    auto subscribedObservers = m_protocolToObserver.find(protocol);
+    if(subscribedObservers==m_protocolToObserver.end()) {
+        return false;
+    }
+
+    auto protocolObserver = subscribedObservers->second.find(observer);
+    if(protocolObserver!=subscribedObservers->second.end()){
+        std::unique_lock<std::mutex> lock(m_mutex);
+        subscribedObservers->second.erase(protocolObserver);
+    }
+
+    return true;
+}
+
+bool PacketReceiver::Attach(PacketObserverShPtr observer) noexcept{
+    std::unique_lock<std::mutex> lock(m_mutex);
+
+    auto result = m_packetObservers.insert(observer);
+    if(!result.second)
+        return false;
+
+    return true;
+}
+
+bool PacketReceiver::Detach(PacketObserverShPtr observer) noexcept{
+    auto searchResult = m_packetObservers.find(observer);
+    if(searchResult==m_packetObservers.end()) {
+        return  false;
+    }
+
+    {
+        std::unique_lock<std::mutex> lock(m_mutex);
+
+        m_packetObservers.erase(searchResult);
+        for(auto& protocol: m_protocolToObserver){
+            protocol.second.erase(observer);
+        }
+    }
+
+    return true;
 }
 
 void PacketReceiver::MainLoop() {
     while(m_runThread){
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-        //Send a request to packet receiver
-        PacketMetadata metadata;
-        zmq::message_t request(sizeof(PacketMetadata));
-        memcpy(request.data(), &metadata, sizeof(PacketMetadata));
-        m_socket.send(request);
-
-        //Send a request with another parameters
-        PacketMetadata metadata2;
-        metadata2.m_size = 30;
-        metadata2.m_type = 40;
-        zmq::message_t request2(sizeof(PacketMetadata));
-        memcpy(request2.data(), &metadata2, sizeof(PacketMetadata));
-        m_socket.send(request2);
+        auto packet = m_packetQueue.TryDequeue();
+        if(packet){
+            OnPacketDistributing(*packet);
+            DistributePacket(std::move(packet));
+        }
+        else{
+            using namespace std::chrono_literals;
+            std::this_thread::sleep_for(10ms);
+        }
     }
 }
 
-void PacketReceiver::StartCapturing() {
-    auto& devices = pcpp::PcapLiveDeviceList::getInstance();
-    auto deviceList = devices.getPcapLiveDevicesList();
+void PacketReceiver::DistributePacket(std::shared_ptr<pcpp::Packet> packet) {
+    for(auto currentLayer = packet->getFirstLayer(); currentLayer!=NULL; currentLayer=currentLayer->getNextLayer()){
+        auto protocol = currentLayer->getProtocol();
 
-    pcpp::PcapLiveDevice* wlp7s0 = devices.getPcapLiveDeviceByName("wlp7s0");
-    if(!wlp7s0)
-        std::runtime_error("Device: wlp7s0 was not found.");
-
-    if(!wlp7s0->open())
-        std::runtime_error("Device wlp7s0 could not be opened.");
-
-    if(!wlp7s0->startCapture(OnPacketArrived, this))
-        std::runtime_error("Unable to start capturing.");
+        std::unique_lock<std::mutex> lock(m_mutex);
+        auto observers = m_protocolToObserver.find(protocol);
+        if(observers!=m_protocolToObserver.end()){
+            for(auto& observer : observers->second){
+                observer->Update(std::move(packet));
+            }
+        }
+    }
 }
-
-void PacketReceiver::OnThreadStarting() {
-    std::cout << "Connecting inproc://my_publisher" << std::endl;
-    m_socket.connect("inproc://my_publisher");
-
-    StartCapturing();
-}
-
