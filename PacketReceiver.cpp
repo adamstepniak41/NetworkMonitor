@@ -88,11 +88,11 @@ void PacketReceiver::MainLoop() {
 }
 
 void PacketReceiver::DistributePacket(std::shared_ptr<pcpp::Packet> packet) {
+    std::unique_lock<std::mutex> lock(m_mutex);
     for(auto currentLayer = packet->getFirstLayer(); currentLayer!=NULL; currentLayer=currentLayer->getNextLayer()){
         auto protocol = currentLayer->getProtocol();
-
-        std::unique_lock<std::mutex> lock(m_mutex);
         auto observers = m_protocolToObserver.find(protocol);
+
         if(observers!=m_protocolToObserver.end()){
             for(auto& observer : observers->second){
                 observer->Update(std::move(packet));
