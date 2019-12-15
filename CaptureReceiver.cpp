@@ -29,7 +29,7 @@ bool CaptureReceiver::StartCapturing() {
 
 void CaptureReceiver::OnPacketArrived(pcpp::RawPacket* pPacket, pcpp::PcapLiveDevice* pDevice, void* userCookie){
     auto packet = std::make_shared<pcpp::Packet>(pPacket);
-    auto packetQueue = static_cast<PacketQueue*>(userCookie);
+    auto packetQueue = static_cast<ThreadSafeQueue<std::shared_ptr<pcpp::Packet>>*>(userCookie);
 
     packetQueue->Enqueue(std::move(packet));
 }

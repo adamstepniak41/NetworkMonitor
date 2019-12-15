@@ -14,7 +14,7 @@ endif()
 #include(${CONAN_LIB_DIRS_PROTOC_INSTALLER}/cmake/protoc/protoc-config.cmake)
 #protobuf_generate(TARGET NetworkMonitor)
 
-set(SOURCES PacketQueue.cpp PacketReceiver.cpp Thread.cpp CaptureReceiver.cpp CaptureReceiver.h)
+set(SOURCES PacketReceiver.cpp Thread.cpp CaptureReceiver.cpp CaptureReceiver.h)
 add_executable(NetworkMonitor NetworkMonitor.cpp ${SOURCES} Resolver.cpp Resolver.h)
 
 target_link_libraries(NetworkMonitor PUBLIC

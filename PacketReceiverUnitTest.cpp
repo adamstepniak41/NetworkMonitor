@@ -7,7 +7,7 @@ public:
     SpecificPacketReceiver(std::vector<pcpp::RawPacket>& samples) : m_samples(samples){}
 protected:
     void OnThreadStarting() override{
-        auto readingThread = std::thread([](PacketQueue& packetQueue, std::vector<pcpp::RawPacket>& samples){
+        auto readingThread = std::thread([](ThreadSafeQueue<std::shared_ptr<pcpp::Packet>>& packetQueue, std::vector<pcpp::RawPacket>& samples){
             for(auto& rawPacket : samples){
                 auto packet = std::make_shared<pcpp::Packet>(&rawPacket);
                 packetQueue.Enqueue(std::move(packet));

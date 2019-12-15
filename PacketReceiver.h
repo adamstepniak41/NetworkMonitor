@@ -3,7 +3,7 @@
 #include <PcapLiveDeviceList.h>
 #include <set>
 #include <map>
-#include "PacketQueue.h"
+#include "ThreadSafeQueue.h"
 #include "Thread.h"
 #include "Interfaces.h"
 
@@ -21,7 +21,7 @@ public:
     bool RemoveFilter(PacketObserverShPtr observer, const pcpp::ProtocolType protocol) noexcept;
 protected:
     virtual void OnPacketDistributing(pcpp::Packet& packet){};
-    PacketQueue m_packetQueue;
+    ThreadSafeQueue<std::shared_ptr<pcpp::Packet> > m_packetQueue;
 private:
     void MainLoop() override;
     void DistributePacket(std::shared_ptr<pcpp::Packet> packet);
