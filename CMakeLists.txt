@@ -15,7 +15,7 @@ endif()
 #protobuf_generate(TARGET NetworkMonitor)
 
 set(SOURCES PacketQueue.cpp PacketReceiver.cpp Thread.cpp CaptureReceiver.cpp CaptureReceiver.h)
-add_executable(NetworkMonitor NetworkMonitor.cpp ${SOURCES})
+add_executable(NetworkMonitor NetworkMonitor.cpp ${SOURCES} Resolver.cpp Resolver.h)
 
 target_link_libraries(NetworkMonitor PUBLIC
         ${CONAN_LIBS}
