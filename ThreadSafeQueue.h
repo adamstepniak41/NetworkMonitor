@@ -15,13 +15,13 @@ public:
 private:
     std::mutex m_mutex;
     std::condition_variable m_cv;
-    std::queue<QueueDataType > m_packets;
+    std::queue<QueueDataType > m_data;
 };
 
 template<class QueueDataType>
 void ThreadSafeQueue<QueueDataType>::Enqueue(QueueDataType data) {
     std::lock_guard<std::mutex> lock(m_mutex);
-    m_packets.push(std::move(data));
+    m_data.push(std::move(data));
     m_cv.notify_one();
 }
 
@@ -29,12 +29,12 @@ template<class QueueDataType>
 QueueDataType ThreadSafeQueue<QueueDataType>::Dequeue() {
     std::unique_lock<std::mutex> cvLock(m_mutex);
 
-    while(m_packets.empty()){
+    while(m_data.empty()){
         m_cv.wait(cvLock);
     }
 
-    auto outPacket = std::move(m_packets.front());
-    m_packets.pop();
+    auto outPacket = std::move(m_data.front());
+    m_data.pop();
 
     return std::move(outPacket);
 }
@@ -42,11 +42,11 @@ QueueDataType ThreadSafeQueue<QueueDataType>::Dequeue() {
 template<class QueueDataType>
 QueueDataType ThreadSafeQueue<QueueDataType>::TryDequeue() {
     std::unique_lock<std::mutex> cvLock(m_mutex);
-    if(m_packets.empty())
-        return std::shared_ptr<pcpp::Packet>();
+    if(m_data.empty())
+        return nullptr;
 
-    auto outPacket = std::move(m_packets.front());
-    m_packets.pop();
+    auto outPacket = std::move(m_data.front());
+    m_data.pop();
 
     return std::move(outPacket);
 }
