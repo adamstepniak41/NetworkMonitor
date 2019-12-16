@@ -11,6 +11,7 @@ public:
 template<class T>
 class IObserver{
 public:
+    virtual ~IObserver(){}
     virtual void Update(T subject) = 0;
     virtual std::string ToString(){ return "Undefined"; };
 };

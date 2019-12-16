@@ -19,17 +19,19 @@ namespace RoundTrip{
             if(connection){
                 std::lock_guard<std::mutex> lock(m_mutex);
                 auto timestamp = packet->getRawPacket()->getPacketTimeStamp();
-                m_syncTimes.insert(std::pair<std::unique_ptr<Connection>, timeval>(std::move(connection), timestamp));
+                m_syncTimes.insert(std::pair<Connection, timeval>(std::move(*connection), timestamp));
             }
         }
         else if(SyncAcknowledged(*tcpLayer)){
             auto connection = GetConnection(*packet);
             if(connection){
                 std::lock_guard<std::mutex> lock(m_mutex);
-                auto startedSync = m_syncTimes.find(connection);
+                auto startedSync = m_syncTimes.find(*connection);
                 if(startedSync!=m_syncTimes.end()){
                     auto syncAckTime = packet->getRawPacket()->getPacketTimeStamp();
-                    std::cout << "Round trip time is: " << syncAckTime.tv_sec - startedSync->second.tv_sec << std::endl;
+                    auto measureResult = Create(std::move(*connection), startedSync->second, syncAckTime);
+                    m_syncTimes.erase(startedSync);
+                    m_measureResults.Enqueue(measureResult);
                 }
             }
         }
@@ -57,13 +59,13 @@ namespace RoundTrip{
         return true;
     }
 
-    std::unique_ptr<Connection>
+    std::optional<Connection>
     Resolver::GetConnection(pcpp::Packet& packet) const {
         pcpp::TcpLayer* tcpLayer = packet.getLayerOfType<pcpp::TcpLayer>();
         if(!tcpLayer)
-            return nullptr;
+            return std::nullopt;
 
-        std::unique_ptr<Connection> connection;
+        std::optional<Connection> connection{std::nullopt};
 
         uint16_t srcPort = tcpLayer->getTcpHeader()->portSrc;
         uint16_t dstPort = tcpLayer->getTcpHeader()->portDst;
@@ -73,20 +75,19 @@ namespace RoundTrip{
 
         if(ipv4Layer && ipv6Layer){
             std::cout << "Any type of packet encapsulation is not supported. Ignoring packet." << std::endl;
-            connection.reset(nullptr);
         }
         else{
             if(ipv4Layer){
                 Endpoint srcEndpoint(std::make_unique<pcpp::IPv4Address>(ipv4Layer->getIPv4Header()->ipSrc), srcPort);
                 Endpoint dstEndpoint(std::make_unique<pcpp::IPv4Address>(ipv4Layer->getIPv4Header()->ipDst), dstPort);
 
-                connection.reset(new Connection(std::move(srcEndpoint), std::move(dstEndpoint)));
+                connection = Connection(std::move(srcEndpoint), std::move(dstEndpoint));
             }
             else if(ipv6Layer){
                 Endpoint srcEndpoint(std::make_unique<pcpp::IPv6Address>(ipv6Layer->getIPv6Header()->ipSrc), srcPort);
                 Endpoint dstEndpoint(std::make_unique<pcpp::IPv6Address>(ipv6Layer->getIPv6Header()->ipDst), dstPort);
 
-                connection.reset(new Connection(std::move(srcEndpoint), std::move(dstEndpoint)));
+               connection = Connection(std::move(srcEndpoint), std::move(dstEndpoint));
             }
         }
 
@@ -96,12 +97,15 @@ namespace RoundTrip{
     void Resolver::MainLoop() {
         using namespace std::chrono_literals;
         while(m_runThread){
-            {
-                std::unique_lock<std::mutex> lock(m_mutex);
-                //Refresh statistics
+            auto measureResult = m_measureResults.TryDequeue();
+            if(measureResult){
+                for(auto& observer: m_measureObservers){
+                    observer->Update(measureResult);
+                }
             }
-
-            std::this_thread::sleep_for(100ms);
+            else{
+                std::this_thread::sleep_for(10ms);
+            }
         }
     }
 
@@ -113,10 +117,19 @@ namespace RoundTrip{
         return tcpLayer.getTcpHeader()->synFlag && tcpLayer.getTcpHeader()->ackFlag;
     }
 
-    bool Resolver::ConnectionsEqual(const std::unique_ptr<Connection>& connection1, const std::unique_ptr<Connection>& connection2) {
-        return  connection1->first.first->equals(&(*connection2->first.first)) &&
-                connection1->second.first->equals(&(*connection2->second.first)) &&
-                connection1->first.second == connection2->first.second &&
-                connection1->second.second == connection2->first.second ;
+    bool Resolver::ConnectionsEqual(const Connection& connection1, const Connection& connection2) {
+        return  connection1.first.first->equals(&(*connection2.first.first)) &&
+                connection1.second.first->equals(&(*connection2.second.first)) &&
+                connection1.first.second == connection2.first.second &&
+                connection1.second.second == connection2.first.second ;
+    }
+
+    MeasureResultShPtr Resolver::Create(Connection connection, timeval syncTime, timeval syncAckTime) {
+        MeasureResultShPtr measureResult(new MeasureResult());
+        measureResult->m_connection = std::move(connection);
+        measureResult->m_roundTrip = syncAckTime.tv_sec - syncTime.tv_sec;
+        measureResult->m_roundTripUSec = syncAckTime.tv_usec - syncTime.tv_usec;
+
+        return measureResult;
     }
 }

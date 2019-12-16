@@ -1,7 +1,9 @@
 cmake_minimum_required (VERSION 3.1)
 project (NetworkMonitor)
 
-add_definitions("-std=c++14")
+set(CMAKE_CXX_STANDARD 17)
+
+#add_definitions("-std=c++17")
 
 if(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
     include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
@@ -14,7 +16,7 @@ endif()
 #include(${CONAN_LIB_DIRS_PROTOC_INSTALLER}/cmake/protoc/protoc-config.cmake)
 #protobuf_generate(TARGET NetworkMonitor)
 
-set(SOURCES PacketReceiver.cpp Thread.cpp CaptureReceiver.cpp CaptureReceiver.h)
+set(SOURCES PacketReceiver.cpp Thread.cpp CaptureReceiver.cpp CaptureReceiver.h Resolver.cpp)
 add_executable(NetworkMonitor NetworkMonitor.cpp ${SOURCES} Resolver.cpp Resolver.h)
 
 target_link_libraries(NetworkMonitor PUBLIC
@@ -31,7 +33,7 @@ target_include_directories(NetworkMonitor
         PUBLIC ${CONAN_INCLUDE_DIRS_GTEST})
 
 add_executable(UnitTests
-        PacketReceiverUnitTest.cpp ${SOURCES} )
+        UnitTests.cpp PacketReceiverUnitTest.cpp ResolverUnitTest.cpp ${SOURCES} )
 
 add_test(Name UnitTests
         COMMAND UnitTests)

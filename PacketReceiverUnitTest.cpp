@@ -231,8 +231,3 @@ TEST (PacketReceiverTest, MultiplePacketsForTheSameLayer) {
 
     EXPECT_EQ (3, observer1->counter);
 }
-
-int main(int argc, char **argv) {
-::testing::InitGoogleTest(&argc, argv);
-return RUN_ALL_TESTS();
-}
