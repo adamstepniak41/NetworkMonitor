@@ -9,8 +9,6 @@
 #include "TcpLayer.h"
 
 bool PacketReceiver::AddFilter(PacketObserverShPtr observer, const pcpp::ProtocolType protocol) noexcept{
-    std::unique_lock<std::mutex> lock(m_mutex);
-
     auto attachedObserver = m_packetObservers.find(observer);
     if(attachedObserver==m_packetObservers.end()) {
         return false;
@@ -23,8 +21,6 @@ bool PacketReceiver::AddFilter(PacketObserverShPtr observer, const pcpp::Protoco
 }
 
 bool PacketReceiver::RemoveFilter(PacketObserverShPtr observer, const pcpp::ProtocolType protocol)  noexcept{
-    std::unique_lock<std::mutex> lock(m_mutex);
-
     auto attachedObserver = m_packetObservers.find(observer);
     if(attachedObserver==m_packetObservers.end()) {
         return false;
@@ -44,8 +40,6 @@ bool PacketReceiver::RemoveFilter(PacketObserverShPtr observer, const pcpp::Prot
 }
 
 bool PacketReceiver::Attach(PacketObserverShPtr observer) noexcept{
-    std::unique_lock<std::mutex> lock(m_mutex);
-
     auto result = m_packetObservers.insert(observer);
     if(!result.second)
         return false;
@@ -54,8 +48,6 @@ bool PacketReceiver::Attach(PacketObserverShPtr observer) noexcept{
 }
 
 bool PacketReceiver::Detach(PacketObserverShPtr observer) noexcept{
-    std::unique_lock<std::mutex> lock(m_mutex);
-
     auto searchResult = m_packetObservers.find(observer);
     if(searchResult==m_packetObservers.end()) {
         return  false;

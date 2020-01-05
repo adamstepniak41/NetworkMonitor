@@ -29,3 +29,10 @@ public:
     bool AddFilter(T index, const pcpp::ProtocolType protocol) noexcept;
     bool RemoveFilter(T index, const pcpp::ProtocolType protocol) noexcept;
 };
+
+template<class ProcessedType>
+class IProcessor{
+public:
+    virtual ~IProcessor(){}
+    virtual void Process(ProcessedType data) = 0;
+};

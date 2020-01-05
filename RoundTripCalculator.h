@@ -1,0 +1,14 @@
+//
+// Created by adam on 19/12/2019.
+//
+
+#ifndef NETWORKMONITOR_ROUNDTRIPCALCULATOR_H
+#define NETWORKMONITOR_ROUNDTRIPCALCULATOR_H
+
+
+class RoundTripCalculator {
+
+};
+
+
+#endif //NETWORKMONITOR_ROUNDTRIPCALCULATOR_H
