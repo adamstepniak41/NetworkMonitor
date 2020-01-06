@@ -11,6 +11,7 @@ void DumpBuffer(const uint8_t* buffPtr, size_t length){
 
 int main(int argc, char **argv)
 {
+    //Get configuration including types of monitors to be enabled
     CaptureReceiver captureReceiver("wlp7s0");
     captureReceiver.Start();
 

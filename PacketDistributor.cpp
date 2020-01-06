@@ -4,11 +4,10 @@
 
 #include <PcapLiveDevice.h>
 #include <iostream>
-#include <functional>
-#include "PacketReceiver.h"
+#include "PacketDistributor.h"
 #include "TcpLayer.h"
 
-bool PacketReceiver::AddFilter(PacketObserverShPtr observer, const pcpp::ProtocolType protocol) noexcept{
+bool PacketDistributor::AddFilter(PacketObserverShPtr observer, const pcpp::ProtocolType protocol) noexcept{
     auto attachedObserver = m_packetObservers.find(observer);
     if(attachedObserver==m_packetObservers.end()) {
         return false;
@@ -20,7 +19,7 @@ bool PacketReceiver::AddFilter(PacketObserverShPtr observer, const pcpp::Protoco
     return true;
 }
 
-bool PacketReceiver::RemoveFilter(PacketObserverShPtr observer, const pcpp::ProtocolType protocol)  noexcept{
+bool PacketDistributor::RemoveFilter(PacketObserverShPtr observer, const pcpp::ProtocolType protocol)  noexcept{
     auto attachedObserver = m_packetObservers.find(observer);
     if(attachedObserver==m_packetObservers.end()) {
         return false;
@@ -39,7 +38,7 @@ bool PacketReceiver::RemoveFilter(PacketObserverShPtr observer, const pcpp::Prot
     return true;
 }
 
-bool PacketReceiver::Attach(PacketObserverShPtr observer) noexcept{
+bool PacketDistributor::Attach(PacketObserverShPtr observer) noexcept{
     auto result = m_packetObservers.insert(observer);
     if(!result.second)
         return false;
@@ -47,7 +46,7 @@ bool PacketReceiver::Attach(PacketObserverShPtr observer) noexcept{
     return true;
 }
 
-bool PacketReceiver::Detach(PacketObserverShPtr observer) noexcept{
+bool PacketDistributor::Detach(PacketObserverShPtr observer) noexcept{
     auto searchResult = m_packetObservers.find(observer);
     if(searchResult==m_packetObservers.end()) {
         return  false;
@@ -61,22 +60,7 @@ bool PacketReceiver::Detach(PacketObserverShPtr observer) noexcept{
     return true;
 }
 
-void PacketReceiver::MainLoop() {
-    while(m_runThread){
-        auto packet = m_packetQueue.TryDequeue();
-        if(packet){
-            OnPacketDistributing(*packet);
-            DistributePacket(std::move(packet));
-        }
-        else{
-            using namespace std::chrono_literals;
-            std::this_thread::sleep_for(10ms);
-        }
-    }
-}
-
-void PacketReceiver::DistributePacket(std::shared_ptr<pcpp::Packet> packet) {
-    std::unique_lock<std::mutex> lock(m_mutex);
+void PacketDistributor::DistributePacket(std::shared_ptr<pcpp::Packet> packet) {
     for(auto currentLayer = packet->getFirstLayer(); currentLayer!=NULL; currentLayer=currentLayer->getNextLayer()){
         auto protocol = currentLayer->getProtocol();
         auto observers = m_protocolToObserver.find(protocol);

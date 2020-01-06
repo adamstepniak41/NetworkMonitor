@@ -9,6 +9,8 @@
 #include <vector>
 #include <queue>
 #include <chrono>
+#include <IpAddress.h>
+#include <TcpLayer.h>
 
 class RoundTripSniffer{
 public:

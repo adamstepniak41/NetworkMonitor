@@ -1,5 +1,4 @@
 #include "gtest/gtest.h"
-#include "Resolver.h"
 #include "RoundTripSniffer.h"
 #include <chrono>
 

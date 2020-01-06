@@ -38,3 +38,7 @@ CaptureReceiver::CaptureReceiver(const std::string& captureName) {
     m_captureName = captureName;
 }
 
+void CaptureReceiver::MainLoop() {
+
+}
+

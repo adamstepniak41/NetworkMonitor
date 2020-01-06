@@ -16,8 +16,8 @@ endif()
 #include(${CONAN_LIB_DIRS_PROTOC_INSTALLER}/cmake/protoc/protoc-config.cmake)
 #protobuf_generate(TARGET NetworkMonitor)
 
-set(SOURCES PacketDistributor.cpp Thread.cpp CaptureReceiver.cpp CaptureReceiver.h Resolver.cpp RoundTripSniffer.cpp)
-add_executable(NetworkMonitor NetworkMonitor.cpp ${SOURCES} Resolver.cpp Resolver.h)
+set(SOURCES PacketDistributor.cpp Thread.cpp CaptureReceiver.cpp CaptureReceiver.h RoundTripSniffer.cpp)
+add_executable(NetworkMonitor NetworkMonitor.cpp ${SOURCES})
 
 target_link_libraries(NetworkMonitor PUBLIC
         ${CONAN_LIBS}
@@ -33,7 +33,7 @@ target_include_directories(NetworkMonitor
         PUBLIC ${CONAN_INCLUDE_DIRS_GTEST})
 
 add_executable(UnitTests
-        UnitTests.cpp PacketReceiverUnitTest.cpp RoundTripSnifferUnitTest.cpp ${SOURCES} )
+        UnitTests.cpp PacketDistributorUnitTest.cpp RoundTripSnifferUnitTest.cpp ${SOURCES} )
 
 add_test(Name UnitTests
         COMMAND UnitTests)
