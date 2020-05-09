@@ -13,8 +13,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: configure
-      run: ./configure
+    - name: conan
+      run: conan install . -s build_type=Release --install-folder=cmake-build-release --profile=gcc_x86_64 && cd cmake-build-release
+    - name: cmake
+      run: cmake -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" ..
     - name: make
       run: make
     - name: make check
